@@ -1,69 +1,38 @@
-.chat-container {
-  max-width: 700px;
-  margin: 50px auto;
-  padding: 20px;
-  background-color: #fefefe;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-family: 'Segoe UI', sans-serif;
-}
-
-.chat-container h1 {
+.App {
   text-align: center;
-  margin-bottom: 20px;
 }
 
-.chat-box {
-  height: 300px;
-  overflow-y: auto;
-  background: #f5f5f5;
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 15px;
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
 }
 
-.chat-message {
-  margin: 10px 0;
-  padding: 10px;
-  border-radius: 6px;
-  max-width: 80%;
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
 }
 
-.chat-message.user {
-  background-color: #d0f0ff;
-  align-self: flex-end;
-  text-align: right;
-  margin-left: auto;
-}
-
-.chat-message.assistant {
-  background-color: #e4e4e4;
-  align-self: flex-start;
-  text-align: left;
-  margin-right: auto;
-}
-
-textarea {
-  width: 100%;
-  height: 80px;
-  padding: 10px;
-  font-size: 1em;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  margin-bottom: 10px;
-}
-
-button {
-  padding: 10px 20px;
-  font-size: 1em;
-  background-color: #0077cc;
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
   color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
 }
 
-button:hover {
-  background-color: #005fa3;
+.App-link {
+  color: #61dafb;
 }
 
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,108 +1,127 @@
 import tkinter as tk
-from tkinter import scrolledtext, messagebox
 import subprocess
-import threading
 import os
+import shutil
+import threading
 import signal
 
-# Paths ke project (sesuaikan)
-FASTAPI_DIR = r"./backend"
-REACT_DIR   = r"./frontend"
+# === Lokasi Folder Proyek ===
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FASTAPI_DIR = os.path.join(BASE_DIR, "backend")
+REACT_DIR = os.path.join(BASE_DIR, "frontend")
 
-class Dashboard(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        self.title("Control Panel — FastAPI & React")
-        self.geometry("700x500")
+fastapi_process = None
+react_process = None
 
-        # Controls frame
-        self.frm_controls = tk.Frame(self)
-        self.frm_controls.pack(pady=10)
+# === Fungsi Menjalankan FastAPI ===
+def start_fastapi():
+    global fastapi_process
+    if not os.path.exists(FASTAPI_DIR):
+        log("[ERROR] Folder FastAPI tidak ditemukan.")
+        return
 
-        # FastAPI buttons
-        tk.Label(self.frm_controls, text="FastAPI Backend:").grid(row=0, column=0, padx=5)
-        self.btn_start_api = tk.Button(self.frm_controls, text="Start", command=self.start_api)
-        self.btn_start_api.grid(row=0, column=1, padx=5)
-        self.btn_stop_api = tk.Button(self.frm_controls, text="Stop", command=self.stop_api, state=tk.DISABLED)
-        self.btn_stop_api.grid(row=0, column=2, padx=5)
+    def run():
+        global fastapi_process
+        if fastapi_process is None:
+            log("Menjalankan FastAPI...")
+            fastapi_process = subprocess.Popen(
+                ["python", "-m", "uvicorn", "backend:app", "--reload", "--host", "0.0.0.0", "--port", "8000"],
+                cwd=FASTAPI_DIR,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+            )
+            while True:
+                line = fastapi_process.stdout.readline()
+                if not line:
+                    break
+                log(line)
 
-        # React buttons
-        tk.Label(self.frm_controls, text="React Frontend:").grid(row=1, column=0, padx=5)
-        self.btn_start_react = tk.Button(self.frm_controls, text="Start", command=self.start_react)
-        self.btn_start_react.grid(row=1, column=1, padx=5)
-        self.btn_stop_react = tk.Button(self.frm_controls, text="Stop", command=self.stop_react, state=tk.DISABLED)
-        self.btn_stop_react.grid(row=1, column=2, padx=5)
+    threading.Thread(target=run, daemon=True).start()
 
-        # Log area
-        self.log_widget = scrolledtext.ScrolledText(self, state='disabled')
-        self.log_widget.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+def stop_fastapi():
+    global fastapi_process
+    if fastapi_process:
+        try:
+            os.kill(fastapi_process.pid, signal.CTRL_C_EVENT)
+            log("FastAPI dihentikan.")
+        except Exception as e:
+            log(f"[ERROR] Gagal menghentikan FastAPI: {e}")
+        fastapi_process = None
 
-        # Process handles
-        self.api_process = None
-        self.react_process = None
+# === Fungsi Menjalankan React (Dev) ===
+def start_react():
+    global react_process
+    if not os.path.exists(REACT_DIR):
+        log("[ERROR] Folder React tidak ditemukan.")
+        return
 
-    def log(self, message):
-        self.log_widget.config(state='normal')
-        self.log_widget.insert(tk.END, message + "\n")
-        self.log_widget.see(tk.END)
-        self.log_widget.config(state='disabled')
+    def run():
+        global react_process
+        if react_process is None:
+            log("Menjalankan React Dev Server...")
+            npm = shutil.which("npm")
+            if npm is None:
+                log("[ERROR] npm tidak ditemukan di PATH.")
+                return
+            react_process = subprocess.Popen(
+                [npm, "start"],
+                cwd=REACT_DIR,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+            )
+            while True:
+                line = react_process.stdout.readline()
+                if not line:
+                    break
+                log(line)
 
-    def start_api(self):
-        if self.api_process:
-            messagebox.showinfo("Info", "FastAPI sudah berjalan.")
-            return
-        cmd = ["uvicorn", "main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
-        self.api_process = subprocess.Popen(
-            cmd, cwd=FASTAPI_DIR,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            text=True, bufsize=1
-        )
-        threading.Thread(target=self.stream_logs, args=(self.api_process, "API"), daemon=True).start()
-        self.btn_start_api.config(state=tk.DISABLED)
-        self.btn_stop_api.config(state=tk.NORMAL)
-        self.log("[API] Memulai FastAPI server...")
+    threading.Thread(target=run, daemon=True).start()
 
-    def stop_api(self):
-        if not self.api_process:
-            return
-        self.log("[API] Menghentikan FastAPI server...")
-        self.api_process.send_signal(signal.SIGINT)
-        self.api_process.wait()
-        self.api_process = None
-        self.btn_start_api.config(state=tk.NORMAL)
-        self.btn_stop_api.config(state=tk.DISABLED)
-        self.log("[API] FastAPI server dihentikan.")
+def stop_react():
+    global react_process
+    if react_process:
+        try:
+            os.kill(react_process.pid, signal.CTRL_C_EVENT)
+            log("React dihentikan.")
+        except Exception as e:
+            log(f"[ERROR] Gagal menghentikan React: {e}")
+        react_process = None
 
-    def start_react(self):
-        if self.react_process:
-            messagebox.showinfo("Info", "React sudah berjalan.")
-            return
-        cmd = ["npm", "start"]
-        self.react_process = subprocess.Popen(
-            cmd, cwd=REACT_DIR,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            text=True, bufsize=1
-        )
-        threading.Thread(target=self.stream_logs, args=(self.react_process, "React"), daemon=True).start()
-        self.btn_start_react.config(state=tk.DISABLED)
-        self.btn_stop_react.config(state=tk.NORMAL)
-        self.log("[React] Memulai React frontend...")
+# === Log Ke Output GUI ===
+def log(message):
+    def append_log():
+        if output_text.winfo_exists():
+            output_text.insert(tk.END, message + "\n")
+            output_text.see(tk.END)
+    try:
+        root.after(0, append_log)
+    except RuntimeError:
+        pass
 
-    def stop_react(self):
-        if not self.react_process:
-            return
-        self.log("[React] Menghentikan React frontend...")
-        self.react_process.send_signal(signal.SIGINT)
-        self.react_process.wait()
-        self.react_process = None
-        self.btn_start_react.config(state=tk.NORMAL)
-        self.btn_stop_react.config(state=tk.DISABLED)
-        self.log("[React] React frontend dihentikan.")
+# === GUI Setup ===
+root = tk.Tk()
+root.title("Control Panel - FastAPI & React (Dev Mode)")
+root.geometry("800x500")
 
-    def stream_logs(self, process, tag):
-        for line in process.stdout:
-            self.log(f"[{tag}] {line.rstrip()}")
-        process.stdout.close()
+frame = tk.Frame(root)
+frame.pack(pady=10)
 
-if __name__ == "__main__":
-    Dashboard().mainloop()
+# === Tombol FastAPI ===
+tk.Label(frame, text="FastAPI").grid(row=0, column=0, padx=10)
+tk.Button(frame, text="Start", command=start_fastapi, bg="lightgreen").grid(row=0, column=1, padx=5)
+tk.Button(frame, text="Stop", command=stop_fastapi, bg="tomato").grid(row=0, column=2, padx=5)
+
+# === Tombol React Dev Server ===
+tk.Label(frame, text="React (Dev)").grid(row=1, column=0, padx=10)
+tk.Button(frame, text="Start", command=start_react, bg="lightgreen").grid(row=1, column=1, padx=5)
+tk.Button(frame, text="Stop", command=stop_react, bg="tomato").grid(row=1, column=2, padx=5)
+
+# === Output Console ===
+output_text = tk.Text(root, height=25, bg="#111", fg="#0f0", insertbackground="white")
+output_text.pack(fill=tk.BOTH, expand=True)
+
+root.mainloop()
