@@ -1,4 +1,5 @@
-[![Video Title](https://youtu.be/KKuDQnvgJjA/0.jpg)](https://youtu.be/KKuDQnvgJjA)
+![ezgif-42a644421f267d](https://github.com/user-attachments/assets/977a18c3-add7-45c4-b9c0-05dae60e855a)
+
 # 💬 Muro AI - Chatbot dengan FastAPI + React + Ollama
 
 Muro AI adalah chatbot modern yang dibangun menggunakan **React.js** untuk frontend, **FastAPI** untuk backend, dan **Ollama** sebagai LLM engine. Proyek ini dirancang agar mudah dijalankan secara lokal untuk praktikum di Laboratorium Robotika,Universitas Gundarma.
